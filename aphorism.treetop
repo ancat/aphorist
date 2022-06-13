@@ -1,0 +1,94 @@
+grammar Aphorism
+  rule expression
+    arithmetic / sub_expression / equality / basic_expression
+  end
+
+  rule sub_expression
+    '(' expression ')' {
+      def value(ctx:)
+        expression.value(ctx: ctx)
+      end
+    }
+  end
+
+  rule basic_expression
+    sub_expression / symbol / literals
+  end
+
+  rule literals
+    nil_literal / boolean_literal / string_literal / range_literal / numeric_literal
+  end
+
+  rule arithmetic
+    lhs:(basic_expression / sub_expression) space operator:('+' / '-') space rhs:(expression) {
+      def value(ctx:)
+        case operator.text_value
+          when '+'
+            lhs.value(ctx: ctx) + rhs.value(ctx: ctx)
+          when '-'
+            lhs.value(ctx: ctx) - rhs.value(ctx: ctx)
+        end
+      end
+    }
+  end
+
+  rule equality
+    lhs:(basic_expression) space '==' space rhs:(expression) {
+      def value(ctx:)
+        return lhs.value(ctx: ctx) == rhs.value(ctx: ctx)
+      end
+    }
+  end
+  
+  rule string_literal
+    ('"' string:( !'"' . )*  '"') <StringLiteral> {
+      def value(ctx:)
+        string.text_value
+      end
+    }
+  end
+
+  rule numeric_literal
+    numeric:('-'? ([0-9])* ('.' [0-9]+)?) <NumericLiteral> {
+      def value(ctx:)
+        numeric.text_value.to_f
+      end
+    }
+  end
+
+  rule boolean_literal
+    boolean:("true" / "false") <BooleanLiteral> {
+      def value(ctx:)
+        boolean.text_value == "true"
+      end
+    }
+  end
+
+  rule nil_literal
+    nil:('nil' / 'null') <NilLiteral> {
+      def value(ctx:)
+        nil
+      end
+    }
+  end
+
+  rule range_literal
+    start:numeric_literal operator:'..' ending:numeric_literal <RangeLiteral> {
+      def value(ctx:)
+        Range.new(start.text_value.to_i, ending.text_value.to_i)
+      end
+    }
+  end
+
+  rule symbol
+    '$' root:([a-zA-Z] [a-zA-Z0-9_]*) path:(('.' [a-zA-Z0-9_]+)*)  {
+      def value(ctx:)
+        ctx.get(identifier: root.text_value, path: path.elements)
+      end
+    }
+  end
+
+  rule space
+    [ \t\n\r]*
+  end
+end
