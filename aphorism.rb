@@ -30,7 +30,7 @@ module Aphorism
         r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
         r0 = r2
       else
-        r3 = _nt_equality
+        r3 = _nt_binary_operator
         if r3
           r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
           r0 = r3
@@ -48,6 +48,217 @@ module Aphorism
     end
 
     node_cache[:expression][start_index] = r0
+
+    r0
+  end
+
+  module MethodCall0
+  end
+
+  module MethodCall1
+    def space1
+      elements[0]
+    end
+
+    def space2
+      elements[2]
+    end
+
+    def expression
+      elements[3]
+    end
+  end
+
+  module MethodCall2
+    def arg0
+      elements[0]
+    end
+
+    def space
+      elements[1]
+    end
+
+    def argN
+      elements[2]
+    end
+  end
+
+  module MethodCall3
+    def root
+      elements[0]
+    end
+
+    def space
+      elements[2]
+    end
+
+    def args
+      elements[3]
+    end
+
+  end
+
+  module MethodCall4
+    def value(ctx:)
+      arguments = []
+      arguments << args.arg0.value(ctx: ctx) if args.arg0.respond_to?(:value)
+      args.argN.elements.each{|argN|
+        arguments << argN.elements[3].value(ctx: ctx) if args.arg0.respond_to?(:value)
+      }
+
+      ctx.call(method: root.text_value, args: arguments)
+    end
+  end
+
+  def _nt_method_call
+    start_index = index
+    if node_cache[:method_call].has_key?(index)
+      cached = node_cache[:method_call][index]
+      if cached
+        node_cache[:method_call][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    i1, s1 = index, []
+    if has_terminal?(@regexps[gr = '\A[a-zA-Z]'] ||= Regexp.new(gr), :regexp, index)
+      r2 = true
+      @index += 1
+    else
+      terminal_parse_failure('[a-zA-Z]')
+      r2 = nil
+    end
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        if has_terminal?(@regexps[gr = '\A[a-zA-Z0-9_]'] ||= Regexp.new(gr), :regexp, index)
+          r4 = true
+          @index += 1
+        else
+          terminal_parse_failure('[a-zA-Z0-9_]')
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
+      end
+      r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+      s1 << r3
+    end
+    if s1.last
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+      r1.extend(MethodCall0)
+    else
+      @index = i1
+      r1 = nil
+    end
+    s0 << r1
+    if r1
+      if (match_len = has_terminal?('(', false, index))
+        r5 = true
+        @index += match_len
+      else
+        terminal_parse_failure('\'(\'')
+        r5 = nil
+      end
+      s0 << r5
+      if r5
+        r6 = _nt_space
+        s0 << r6
+        if r6
+          i8, s8 = index, []
+          r10 = _nt_expression
+          if r10
+            r9 = r10
+          else
+            r9 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s8 << r9
+          if r9
+            r11 = _nt_space
+            s8 << r11
+            if r11
+              s12, i12 = [], index
+              loop do
+                i13, s13 = index, []
+                r14 = _nt_space
+                s13 << r14
+                if r14
+                  if (match_len = has_terminal?(',', false, index))
+                    r15 = true
+                    @index += match_len
+                  else
+                    terminal_parse_failure('\',\'')
+                    r15 = nil
+                  end
+                  s13 << r15
+                  if r15
+                    r16 = _nt_space
+                    s13 << r16
+                    if r16
+                      r17 = _nt_expression
+                      s13 << r17
+                    end
+                  end
+                end
+                if s13.last
+                  r13 = instantiate_node(SyntaxNode,input, i13...index, s13)
+                  r13.extend(MethodCall1)
+                else
+                  @index = i13
+                  r13 = nil
+                end
+                if r13
+                  s12 << r13
+                else
+                  break
+                end
+              end
+              r12 = instantiate_node(SyntaxNode,input, i12...index, s12)
+              s8 << r12
+            end
+          end
+          if s8.last
+            r8 = instantiate_node(SyntaxNode,input, i8...index, s8)
+            r8.extend(MethodCall2)
+          else
+            @index = i8
+            r8 = nil
+          end
+          if r8
+            r7 = r8
+          else
+            r7 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r7
+          if r7
+            if (match_len = has_terminal?(')', false, index))
+              r18 = true
+              @index += match_len
+            else
+              terminal_parse_failure('\')\'')
+              r18 = nil
+            end
+            s0 << r18
+          end
+        end
+      end
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(MethodCall3)
+      r0.extend(MethodCall4)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:method_call][start_index] = r0
 
     r0
   end
@@ -125,23 +336,29 @@ module Aphorism
     end
 
     i0 = index
-    r1 = _nt_sub_expression
+    r1 = _nt_method_call
     if r1
       r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
       r0 = r1
     else
-      r2 = _nt_symbol
+      r2 = _nt_sub_expression
       if r2
         r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
         r0 = r2
       else
-        r3 = _nt_literals
+        r3 = _nt_symbol
         if r3
           r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
           r0 = r3
         else
-          @index = i0
-          r0 = nil
+          r4 = _nt_literals
+          if r4
+            r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
+            r0 = r4
+          else
+            @index = i0
+            r0 = nil
+          end
         end
       end
     end
@@ -318,13 +535,17 @@ module Aphorism
     r0
   end
 
-  module Equality0
+  module BinaryOperator0
     def lhs
       elements[0]
     end
 
     def space1
       elements[1]
+    end
+
+    def operator
+      elements[2]
     end
 
     def space2
@@ -336,18 +557,26 @@ module Aphorism
     end
   end
 
-  module Equality1
+  module BinaryOperator1
     def value(ctx:)
-      return lhs.value(ctx: ctx) == rhs.value(ctx: ctx)
+      case operator.text_value
+        when '=='
+          return lhs.value(ctx: ctx) == rhs.value(ctx: ctx)
+        when '!='
+          return lhs.value(ctx: ctx) != rhs.value(ctx: ctx)
+        when '=~'
+          expression = Regexp.new rhs.value(ctx: ctx)
+          return !(lhs.value(ctx: ctx) =~ expression).nil?
+      end
     end
   end
 
-  def _nt_equality
+  def _nt_binary_operator
     start_index = index
-    if node_cache[:equality].has_key?(index)
-      cached = node_cache[:equality][index]
+    if node_cache[:binary_operator].has_key?(index)
+      cached = node_cache[:binary_operator][index]
       if cached
-        node_cache[:equality][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        node_cache[:binary_operator][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
         @index = cached.interval.end
       end
       return cached
@@ -360,34 +589,66 @@ module Aphorism
       r2 = _nt_space
       s0 << r2
       if r2
+        i3 = index
         if (match_len = has_terminal?('==', false, index))
-          r3 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+          r4 = instantiate_node(SyntaxNode,input, index...(index + match_len))
           @index += match_len
         else
           terminal_parse_failure('\'==\'')
-          r3 = nil
+          r4 = nil
+        end
+        if r4
+          r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
+          r3 = r4
+        else
+          if (match_len = has_terminal?('!=', false, index))
+            r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+            @index += match_len
+          else
+            terminal_parse_failure('\'!=\'')
+            r5 = nil
+          end
+          if r5
+            r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
+            r3 = r5
+          else
+            if (match_len = has_terminal?('=~', false, index))
+              r6 = instantiate_node(SyntaxNode,input, index...(index + match_len))
+              @index += match_len
+            else
+              terminal_parse_failure('\'=~\'')
+              r6 = nil
+            end
+            if r6
+              r6 = SyntaxNode.new(input, (index-1)...index) if r6 == true
+              r3 = r6
+            else
+              @index = i3
+              r3 = nil
+            end
+          end
         end
         s0 << r3
         if r3
-          r4 = _nt_space
-          s0 << r4
-          if r4
-            r5 = _nt_expression
-            s0 << r5
+          r7 = _nt_space
+          s0 << r7
+          if r7
+            r8 = _nt_expression
+            s0 << r8
           end
         end
       end
     end
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-      r0.extend(Equality0)
-      r0.extend(Equality1)
+      r0.extend(BinaryOperator0)
+      r0.extend(BinaryOperator1)
     else
       @index = i0
       r0 = nil
     end
 
-    node_cache[:equality][start_index] = r0
+    node_cache[:binary_operator][start_index] = r0
 
     r0
   end
@@ -560,7 +821,12 @@ module Aphorism
           break
         end
       end
-      r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+      if s4.empty?
+        @index = i4
+        r4 = nil
+      else
+        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+      end
       s1 << r4
       if r4
         i7, s7 = index, []

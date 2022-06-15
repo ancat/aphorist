@@ -1,6 +1,28 @@
 grammar Aphorism
   rule expression
-    arithmetic / sub_expression / equality / basic_expression
+    arithmetic / sub_expression / binary_operator / basic_expression
+  end
+
+  rule method_call
+    root:([a-zA-Z] [a-zA-Z0-9_]*)
+      '('
+      space
+      args:(
+        arg0:expression?
+        space
+        argN:(space ',' space expression)*
+      )?
+      ')' {
+    def value(ctx:)
+      arguments = []
+      arguments << args.arg0.value(ctx: ctx) if args.arg0.respond_to?(:value)
+      args.argN.elements.each{|argN|
+        arguments << argN.elements[3].value(ctx: ctx) if args.arg0.respond_to?(:value)
+      }
+
+      ctx.call(method: root.text_value, args: arguments)
+    end
+    }
   end
 
   rule sub_expression
@@ -12,7 +34,7 @@ grammar Aphorism
   end
 
   rule basic_expression
-    sub_expression / symbol / literals
+    method_call / sub_expression / symbol / literals
   end
 
   rule literals
@@ -32,10 +54,18 @@ grammar Aphorism
     }
   end
 
-  rule equality
-    lhs:(basic_expression) space '==' space rhs:(expression) {
+  rule binary_operator
+    lhs:(basic_expression) space operator:('==' / '!=' / '=~') space rhs:(expression) {
       def value(ctx:)
-        return lhs.value(ctx: ctx) == rhs.value(ctx: ctx)
+        case operator.text_value
+          when '=='
+            return lhs.value(ctx: ctx) == rhs.value(ctx: ctx)
+          when '!='
+            return lhs.value(ctx: ctx) != rhs.value(ctx: ctx)
+          when '=~'
+            expression = Regexp.new rhs.value(ctx: ctx)
+            return !(lhs.value(ctx: ctx) =~ expression).nil?
+        end
       end
     }
   end
@@ -49,7 +79,7 @@ grammar Aphorism
   end
 
   rule numeric_literal
-    numeric:('-'? ([0-9])* ('.' [0-9]+)?) <NumericLiteral> {
+    numeric:('-'? ([0-9])+ ('.' [0-9]+)?) <NumericLiteral> {
       def value(ctx:)
         numeric.text_value.to_f
       end

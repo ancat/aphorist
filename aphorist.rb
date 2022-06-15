@@ -1,6 +1,7 @@
 class Context
-  def initialize(default: {})
+  def initialize(default: {}, methods: {})
     @symbol_table = default
+    @methods = methods
   end
 
   def set(identifier:, value:)
@@ -24,15 +25,25 @@ class Context
     child
   end
 
+  def call(method:, args:)
+    assert_method_exists!(method: method)
+    @methods[method.to_sym].call(*args)
+  end
+
+  private
   def assert_defined!(identifier:)
     raise "Undefined variable: #{identifier}" unless @symbol_table.has_key?(identifier.to_sym)
+  end
+
+  def assert_method_exists!(method:)
+    raise "Undefined method: #{method}" unless @methods.has_key?(method.to_sym)
   end
 end
 
 class Aphorist
-  def initialize(default: {})
+  def initialize(default: {}, methods: {})
     @parser = AphorismParser.new
-    @context = Context.new(default: default)
+    @context = Context.new(default: default, methods: methods)
   end
 
   def parse(rule:)
