@@ -1,3 +1,7 @@
+require 'treetop'
+require_relative 'aphorism_node_classes'
+require_relative 'aphorism'
+
 class Context
   def initialize(default: {}, methods: {})
     @symbol_table = default
